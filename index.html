@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apresentação: Semáforo Arduino + Tinkercad</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@0.263.1/dist/umd/lucide.min.js"></script>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        pre { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Animações */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse-shadow-green { 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+        
+        .shadow-glow-green { box-shadow: 0 0 30px rgba(34, 197, 94, 0.9); }
+        .shadow-glow-yellow { box-shadow: 0 0 30px rgba(234, 179, 8, 0.9); }
+        .shadow-glow-red { box-shadow: 0 0 30px rgba(220, 38, 38, 0.9); }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- HEADER -->
+    <header class="border-b border-gray-700 bg-gray-900/90 backdrop-blur sticky top-0 z-20">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 p-2 rounded-lg">
+                    <i data-lucide="zap" class="text-white w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold leading-none">Projeto Semáforo</h1>
+                    <p class="text-[10px] text-gray-400 font-mono mt-1">ARDUINO + TINKERCAD</p>
+                </div>
+            </div>
+            <div class="hidden md:block text-xs text-gray-500">
+                v1.3 com Tinkercad
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 container mx-auto px-4 py-6 lg:grid lg:grid-cols-2 gap-8 relative">
+        
+        <!-- SLIDES (Esquerda) -->
+        <section class="bg-gray-800/50 backdrop-blur p-6 rounded-2xl border border-gray-700 shadow-xl flex flex-col lg:h-[calc(100vh-120px)] relative w-full">
+            
+            <!-- Area de Conteudo -->
+            <div id="slide-container" class="flex-1 overflow-y-auto pr-2 pb-4">
+                <!-- Conteúdo injetado via JS -->
+            </div>
+
+            <!-- Navegação -->
+            <div class="mt-4 pt-4 border-t border-gray-700 flex justify-between items-center flex-none">
+                <button id="btn-prev" class="flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-gray-400 hover:bg-gray-700 hover:text-white transition-colors disabled:opacity-50 text-sm">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Anterior
+                </button>
+                
+                <div id="dots-container" class="flex gap-2"></div>
+
+                <button id="btn-next" class="flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold shadow-lg transition-transform hover:scale-105 disabled:opacity-50 text-sm">
+                    Próximo <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- SIMULADOR (Direita / Modal Mobile) -->
+        <section id="simulation-section" class="hidden fixed inset-0 z-50 bg-gray-900/95 backdrop-blur p-4 flex-col justify-center items-center lg:static lg:bg-transparent lg:p-0 lg:flex lg:w-auto lg:h-auto lg:inset-auto lg:backdrop-blur-0 lg:z-auto">
+            
+            <button onclick="app.toggleSimulation(false)" class="absolute top-4 right-4 bg-gray-800 p-2 rounded-full text-gray-400 hover:text-white lg:hidden z-50">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+
+            <div class="flex flex-col relative rounded-3xl overflow-hidden bg-gradient-to-br from-gray-800 to-black border border-gray-700 shadow-2xl w-full max-w-md lg:max-w-none lg:h-full min-h-[500px]">
+                <!-- Decoração de Fundo -->
+                <div class="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiLz48L3N2Zz4=')]"></div>
+                
+                <div class="flex-1 flex flex-col justify-center items-center relative z-10 p-6">
+                    <div class="mb-8 text-center">
+                        <h3 class="text-lg font-bold text-gray-300 flex items-center justify-center gap-2">
+                            <i data-lucide="play-circle" class="w-5 h-5 text-blue-400"></i> Simulador Virtual
+                        </h3>
+                        <p class="text-xs text-gray-500 mt-1">Testando a lógica do millis()</p>
+                    </div>
+
+                    <!-- SEMÁFORO VISUAL -->
+                    <div class="bg-gray-900 p-6 rounded-xl border-2 border-gray-700 shadow-2xl w-full max-w-xs mx-auto">
+                        <div class="flex gap-4 justify-center mb-8">
+                            <!-- Carros -->
+                            <div class="bg-black p-3 rounded-xl border-2 border-gray-800 flex flex-col gap-3 items-center shadow-lg">
+                                <p class="text-[9px] text-gray-500 font-bold tracking-widest">CARROS</p>
+                                <div id="light-car-red" class="w-12 h-12 rounded-full bg-red-900 opacity-30 border border-gray-600 transition-all duration-300"></div>
+                                <div id="light-car-yellow" class="w-12 h-12 rounded-full bg-yellow-900 opacity-30 border border-gray-600 transition-all duration-300"></div>
+                                <div id="light-car-green" class="w-12 h-12 rounded-full bg-green-500 shadow-glow-green border border-gray-600 transition-all duration-300"></div>
+                            </div>
+                            <!-- Pedestre -->
+                            <div class="flex flex-col justify-between">
+                                <div class="bg-black p-3 rounded-xl border-2 border-gray-800 flex flex-col gap-3 items-center shadow-lg">
+                                    <p class="text-[9px] text-gray-500 font-bold tracking-widest">PEDESTRE</p>
+                                    <div id="light-ped-red" class="w-10 h-10 rounded-full bg-red-600 shadow-glow-red border border-gray-600 flex items-center justify-center transition-all duration-300">
+                                        <span class="text-sm select-none">✋</span>
+                                    </div>
+                                    <div id="light-ped-green" class="w-10 h-10 rounded-full bg-green-900 opacity-30 border border-gray-600 flex items-center justify-center transition-all duration-300">
+                                        <span class="text-sm select-none">🚶</span>
+                                    </div>
+                                </div>
+                                <!-- Buzzer -->
+                                <div id="buzzer-indicator" class="py-2 px-2 bg-gray-800 rounded text-gray-500 flex items-center justify-center gap-2 transition-all">
+                                    <i data-lucide="volume-2" class="w-3 h-3"></i>
+                                    <span class="text-[10px] font-mono font-bold">OFF</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botão Ação -->
+                        <div class="flex items-center gap-4">
+                            <div class="relative">
+                                <button id="btn-action" onclick="app.handleButtonClick()" class="w-16 h-16 rounded-full bg-blue-600 border-b-4 border-blue-800 hover:bg-blue-500 text-white flex items-center justify-center shadow-lg active:border-b-0 active:translate-y-1 transition-all">
+                                    <span id="btn-text" class="text-[10px] font-bold">PRESS</span>
+                                </button>
+                                <div id="badge-cooldown" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full animate-bounce">
+                                    <i data-lucide="lock" class="w-3 h-3 inline"></i> 5s
+                                </div>
+                            </div>
+                            <div class="flex-1 bg-gray-800 p-3 rounded text-xs font-mono text-green-400 border border-gray-700">
+                                <div class="flex justify-between mb-1"><span>STATUS:</span> <span id="status-text" class="text-white">VERDE</span></div>
+                                <div class="flex justify-between"><span>TIMER:</span> <span id="timer-text" class="text-white">--</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-gray-500 text-xs mt-6 text-center">O simulador permanece ativo durante a apresentação.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Mobile FAB -->
+    <button onclick="app.toggleSimulation(true)" class="lg:hidden fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-xl border-2 border-blue-400 flex items-center gap-2 hover:scale-105 transition-transform z-40">
+        <i data-lucide="gamepad-2" class="w-5 h-5"></i> <span class="font-bold text-sm">Abrir Simulador</span>
+    </button>
+
+    <!-- SCRIPTS -->
+    <script>
+        const slides = [
+            {
+                title: "Abertura: O Caos Urbano",
+                content: `
+                    <p class="mb-4">Imagine: Sexta-feira, 18h. O trânsito é um caos. Você precisa atravessar, mas os carros não param.</p>
+                    <div class="bg-yellow-900/20 border-l-4 border-yellow-500 p-4 my-6 rounded-r">
+                        <p class="text-yellow-200 italic">"Você tem duas opções: Correr e rezar, ou ter o poder de parar o tempo."</p>
+                    </div>
+                    <p>Hoje apresentamos o <strong>Sistema de Controle de Tráfego Híbrido</strong>. O semáforo inteligente.</p>
+                `
+            },
+            {
+                title: "O Hardware",
+                content: `
+                    <div class="space-y-3">
+                        <div class="flex gap-4 p-4 bg-gray-800 rounded-xl border border-gray-700 hover:border-blue-500 transition-colors">
+                            <i data-lucide="cpu" class="text-blue-400 w-6 h-6 mt-1"></i>
+                            <div>
+                                <strong class="text-white block">Arduino Uno</strong>
+                                <p class="text-sm text-gray-400">O cérebro que processa a lógica.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 p-4 bg-gray-800 rounded-xl border border-gray-700 hover:border-yellow-500 transition-colors">
+                            <i data-lucide="lightbulb" class="text-yellow-400 w-6 h-6 mt-1"></i>
+                            <div>
+                                <strong class="text-white block">LEDs e Buzzer</strong>
+                                <p class="text-sm text-gray-400">Sinais visuais e sonoros para acessibilidade.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4 p-4 bg-gray-800 rounded-xl border border-gray-700 hover:border-orange-500 transition-colors">
+                            <i data-lucide="mouse-pointer-2" class="text-orange-400 w-6 h-6 mt-1"></i>
+                            <div>
+                                <strong class="text-white block">Push-Button</strong>
+                                <p class="text-sm text-gray-400">Com resistor Pull-Down e filtro de ruído.</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                title: "A Lógica: Millis()",
+                content: `
+                    <p class="mb-4">Semáforos comuns usam <code class="bg-gray-700 px-1 rounded text-red-300">delay()</code> e "dormem". O nosso usa <code class="bg-gray-700 px-1 rounded text-green-300">millis()</code>.</p>
+                    <div class="bg-gray-950 p-4 rounded-lg border border-gray-800 font-mono text-xs overflow-x-auto mb-4 shadow-inner">
+                        <span class="text-gray-500">// Trecho Principal</span><br>
+                        <span class="text-purple-400">if</span>(botao == <span class="text-blue-400">HIGH</span> && (<span class="text-yellow-400">millis</span>() - ultimo > <span class="text-orange-400">5000</span>)) {<br>
+                        &nbsp;&nbsp;<span class="text-yellow-400">cicloPedestre</span>();<br>
+                        }
+                    </div>
+                    <p class="text-sm text-gray-400">Isso garante o <strong>Cooldown</strong>: o botão é ignorado por 5s após o ciclo para não travar o trânsito.</p>
+                `
+            },
+            {
+                title: "Hora da Simulação",
+                content: `
+                    <p class="mb-6">Vamos ver na prática.</p>
+                    <ul class="space-y-3 text-gray-300 mb-8 text-sm">
+                        <li class="flex gap-2"><i data-lucide="check" class="text-green-500 w-4 h-4"></i> Estado normal: Carro Verde.</li>
+                        <li class="flex gap-2"><i data-lucide="check" class="text-green-500 w-4 h-4"></i> Ao clicar: Transição segura (Amarelo > Vermelho).</li>
+                        <li class="flex gap-2"><i data-lucide="check" class="text-green-500 w-4 h-4"></i> Pós-ciclo: Bloqueio de 5s.</li>
+                    </ul>
+                    <div class="text-center">
+                        <p class="text-blue-400 animate-pulse font-bold text-sm lg:block hidden">Use o painel à direita &rarr;</p>
+                        <p class="text-blue-400 animate-pulse font-bold text-sm lg:hidden">Clique no botão flutuante abaixo &darr;</p>
+                    </div>
+                `
+            },
+            // NOVO SLIDE: TINKERCAD
+            {
+                title: "Prototipagem no Tinkercad",
+                content: `
+                    <p class="mb-4 text-gray-300">Antes de montarmos o físico, validamos tudo virtualmente.</p>
+                    
+                    <!-- Placeholder da Imagem -->
+                    <div class="border-2 border-dashed border-gray-600 bg-gray-800/50 rounded-xl h-48 flex flex-col items-center justify-center text-center p-4 mb-4 group hover:border-blue-500 transition-colors">
+                        <i data-lucide="image-plus" class="w-8 h-8 text-gray-500 mb-2 group-hover:text-blue-400"></i>
+                        <p class="text-sm text-gray-400 font-bold">Cole sua imagem do Tinkercad aqui</p>
+                        <p class="text-xs text-gray-600 mt-1">&lt;img src="sua-foto.jpg"&gt;</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-xs text-gray-400">
+                        <div class="bg-gray-800 p-2 rounded border border-gray-700">Arduino Uno R3</div>
+                        <div class="bg-gray-800 p-2 rounded border border-gray-700">Protoboard Mini</div>
+                        <div class="bg-gray-800 p-2 rounded border border-gray-700">5x LEDs (R/Y/G + R/G)</div>
+                        <div class="bg-gray-800 p-2 rounded border border-gray-700">Resistores 330Ω</div>
+                    </div>
+                `
+            },
+            {
+                title: "Conclusão",
+                content: `
+                    <div class="bg-green-900/20 border border-green-500/30 p-6 rounded-2xl text-center mb-6">
+                        <i data-lucide="check-circle-2" class="w-12 h-12 text-green-500 mx-auto mb-3"></i>
+                        <h3 class="text-xl font-bold text-white mb-1">Missão Cumprida</h3>
+                        <p class="text-green-200/80 text-sm">Segurança e prioridade.</p>
+                    </div>
+                    <p class="text-gray-300 text-sm text-center">Integramos eletrônica robusta, lógica de programação eficiente e design funcional.</p>
+                `
+            }
+        ];
+
+        const app = {
+            currentSlide: 0,
+            state: 'green', // green, yellow, red, ped-go, ped-flash
+            isCooldown: false,
+
+            els: {
+                slideContainer: document.getElementById('slide-container'),
+                dots: document.getElementById('dots-container'),
+                prev: document.getElementById('btn-prev'),
+                next: document.getElementById('btn-next'),
+                
+                // Simulator
+                simModal: document.getElementById('simulation-section'),
+                carRed: document.getElementById('light-car-red'),
+                carYel: document.getElementById('light-car-yellow'),
+                carGrn: document.getElementById('light-car-green'),
+                pedRed: document.getElementById('light-ped-red'),
+                pedGrn: document.getElementById('light-ped-green'),
+                buzzer: document.getElementById('buzzer-indicator'),
+                
+                btnAction: document.getElementById('btn-action'),
+                btnText: document.getElementById('btn-text'),
+                badge: document.getElementById('badge-cooldown'),
+                status: document.getElementById('status-text'),
+                timer: document.getElementById('timer-text')
+            },
+
+            init() {
+                this.renderSlide(0);
+                this.els.prev.onclick = () => this.nav(-1);
+                this.els.next.onclick = () => this.nav(1);
+                this.initIcons();
+            },
+
+            initIcons() {
+                if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                    lucide.createIcons();
+                }
+            },
+
+            nav(dir) {
+                const next = this.currentSlide + dir;
+                if(next >= 0 && next < slides.length) this.renderSlide(next);
+            },
+
+            renderSlide(idx) {
+                this.currentSlide = idx;
+                const s = slides[idx];
+                
+                // Render Content
+                this.els.slideContainer.innerHTML = `
+                    <div class="animate-[fadeIn_0.4s_ease-out]">
+                        <span class="px-2 py-1 bg-blue-900/50 text-blue-300 text-[10px] font-bold rounded mb-3 inline-block border border-blue-800">SLIDE ${idx + 1}/${slides.length}</span>
+                        <h2 class="text-3xl font-bold mb-2 text-white">${s.title}</h2>
+                        <div class="w-16 h-1 bg-blue-500 rounded mb-6"></div>
+                        <div class="text-base leading-relaxed text-gray-300">${s.content}</div>
+                    </div>
+                `;
+
+                // Update Controls
+                this.els.prev.disabled = idx === 0;
+                this.els.next.disabled = idx === slides.length - 1;
+                this.els.dots.innerHTML = slides.map((_, i) => 
+                    `<div class="h-1.5 rounded-full transition-all ${i===idx ? 'w-6 bg-blue-500' : 'w-1.5 bg-gray-700'}"></div>`
+                ).join('');
+                
+                this.initIcons();
+            },
+
+            toggleSimulation(show) {
+                const cl = this.els.simModal.classList;
+                show ? (cl.remove('hidden'), cl.add('flex')) : (cl.add('hidden'), cl.remove('flex'));
+                if (show) this.initIcons();
+            },
+
+            // Lógica Simplificada do Semáforo
+            handleButtonClick() {
+                if(this.state !== 'green' || this.isCooldown) return;
+                this.runCycle();
+            },
+
+            setLight(car, ped) {
+                // Helper para resetar classes
+                const reset = (el, col) => el.className = `w-12 h-12 rounded-full bg-${col}-900 opacity-30 border border-gray-600 transition-all duration-300`;
+                const resetPed = (el, col) => el.className = `w-10 h-10 rounded-full bg-${col}-900 opacity-30 border border-gray-600 flex items-center justify-center transition-all duration-300`;
+                
+                reset(this.els.carRed, 'red'); reset(this.els.carYel, 'yellow'); reset(this.els.carGrn, 'green');
+                resetPed(this.els.pedRed, 'red'); resetPed(this.els.pedGrn, 'green');
+
+                // Helper para ativar
+                const active = (el, col, glow) => el.className = `w-12 h-12 rounded-full bg-${col}-500 ${glow} border border-gray-600 transition-all duration-300`;
+                const activePed = (el, col, glow) => el.className = `w-10 h-10 rounded-full bg-${col}-500 ${glow} border border-gray-600 flex items-center justify-center transition-all duration-300`;
+
+                if(car === 'red') active(this.els.carRed, 'red', 'shadow-glow-red');
+                if(car === 'yellow') active(this.els.carYel, 'yellow', 'shadow-glow-yellow');
+                if(car === 'green') active(this.els.carGrn, 'green', 'shadow-glow-green');
+                
+                if(ped === 'red') activePed(this.els.pedRed, 'red', 'shadow-glow-red');
+                if(ped === 'green') activePed(this.els.pedGrn, 'green', 'shadow-glow-green');
+            },
+
+            runCycle() {
+                this.state = 'cycling';
+                this.els.btnAction.className = "w-16 h-16 rounded-full bg-gray-700 border-b-4 border-gray-900 cursor-not-allowed flex items-center justify-center";
+                this.els.btnText.innerText = "WAIT";
+
+                // 1. Amarelo (3s)
+                this.setLight('yellow', 'red');
+                this.els.status.innerText = "AMARELO";
+                this.els.timer.innerText = "3s";
+
+                setTimeout(() => {
+                    // 2. Vermelho (2s)
+                    this.setLight('red', 'red');
+                    this.els.status.innerText = "VERMELHO";
+                    this.els.timer.innerText = "2s";
+                    
+                    setTimeout(() => {
+                        // 3. Pedestre Verde (5s)
+                        this.setLight('red', 'green');
+                        this.els.status.innerText = "PEDESTRE";
+                        this.els.timer.innerText = "5s";
+
+                        setTimeout(() => {
+                            // 4. Pisca (6s)
+                            this.els.status.innerText = "PISCANDO";
+                            this.els.timer.innerText = "6s";
+                            let count = 0;
+                            const flash = setInterval(() => {
+                                count++;
+                                const isOn = count % 2 !== 0;
+                                if(isOn) {
+                                    this.els.pedGrn.classList.replace('opacity-30', 'opacity-100');
+                                    this.els.pedGrn.classList.add('bg-green-500', 'shadow-glow-green');
+                                    this.els.buzzer.classList.replace('text-gray-500', 'text-yellow-400');
+                                    this.els.buzzer.querySelector('span').innerText = "BEEP";
+                                } else {
+                                    this.els.pedGrn.classList.replace('opacity-100', 'opacity-30');
+                                    this.els.pedGrn.classList.remove('bg-green-500', 'shadow-glow-green');
+                                    this.els.buzzer.classList.replace('text-yellow-400', 'text-gray-500');
+                                    this.els.buzzer.querySelector('span').innerText = "OFF";
+                                }
+                            }, 500);
+
+                            setTimeout(() => {
+                                clearInterval(flash);
+                                this.endCycle();
+                            }, 6000);
+
+                        }, 5000);
+                    }, 2000);
+                }, 3000);
+            },
+
+            endCycle() {
+                this.setLight('green', 'red');
+                this.els.status.innerText = "VERDE";
+                this.els.timer.innerText = "--";
+                
+                // Cooldown 5s
+                this.isCooldown = true;
+                this.els.badge.classList.remove('hidden');
+                this.els.btnAction.className = "w-16 h-16 rounded-full bg-red-900 border-b-4 border-red-950 cursor-not-allowed flex items-center justify-center";
+                this.els.btnText.innerText = "BLOCK";
+
+                setTimeout(() => {
+                    this.isCooldown = false;
+                    this.els.badge.classList.add('hidden');
+                    this.els.btnAction.className = "w-16 h-16 rounded-full bg-blue-600 border-b-4 border-blue-800 hover:bg-blue-500 flex items-center justify-center shadow-lg transition-all cursor-pointer";
+                    this.els.btnText.innerText = "PRESS";
+                }, 5000);
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html>
